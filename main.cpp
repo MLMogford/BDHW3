@@ -206,14 +206,14 @@ int main(int argc, char *argv[]) {
             sum = SUM_Array(res, count);
             end_time = get_time_us();
             use_time = end_time - begin_time;
-            printf("sum is %ld, use_time : %ld us [single thread]\n", sum, use_time);
+            printf("sum is %i, use_time : %ld us [single thread]\n", sum, use_time);
 
             sum = 0;
             begin_time = get_time_us();
             sum = SUM_Array_threaded(res, count);
             end_time = get_time_us();
             use_time = end_time - begin_time;
-            printf("sum is %ld, use_time : %ld us [multiple threads]\n\n", sum, use_time);
+            printf("sum is %i, use_time : %ld us [multiple threads]\n\n", sum, use_time);
         }
 
     }
