@@ -134,6 +134,8 @@ int main(int argc, char *argv[]) {
     // you can add some variable or some other things as you want if needed
     // TODO
 
+    volatile force_create_thread = SUM_Array_threaded(a, MAX_LEN);
+
     for (count = 4; count <= MAX_LEN; count *= 16) // length of array : [ 4  64  1024  16384  262144  4194304 ]
     {
         // the element of array is generated randomly
