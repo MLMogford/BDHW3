@@ -6,4 +6,5 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(OpenMP REQUIRED)
 
 add_executable(BDHW3 main.cpp)
-target_compile_options(BDHW3 PUBLIC ${OpenMP_CXX_FLAGS} -fopenmp -O3 -march=native)
+target_compile_options(BDHW3 PUBLIC ${OpenMP_CXX_FLAGS} -O3 -march=native)
+target_link_libraries(BDHW3 PUBLIC openmp)
