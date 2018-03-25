@@ -11,6 +11,7 @@
 #include <array>
 #include <algorithm>
 #include "mpi.h"
+
 using namespace std;
 
 //#include <boost/mpi.hpp>
@@ -66,8 +67,8 @@ void SUM_Threaded() {//thread launching
 }
 
 */
-int SUM_Array(int* a, int count) {
-    size_t sum = 0;
+int SUM_Array(int *a, int count) {
+    int sum = 0;
 
     for (size_t i = 0; i < count; i++)
         sum += a[i];
@@ -76,26 +77,36 @@ int SUM_Array(int* a, int count) {
 }
 //unthreaded test
 
+int SUM_Array_threaded(int *a, int count) {
+    int sum = 0;
 
-   // auto start = std::chrono::high_resolution_clock::now();
-    //test(0, *a, &sum);
-   // auto end = std::chrono::high_resolution_clock::now();
+    #pragma omp parallel for reduction(+:sum)
+    for (size_t i = 0; i < count; i++)
+        sum += a[i];
 
-  //  cout << "Sum is " << sum << endl;
+    return sum;
+}
 
-  //  int64_t elapse_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-  //  cout<< "scan time: " << elapse_time << "usec" << endl;
-  //  cout<< "Bandwidth is " << sizeof(int) * (double)1.0 * *a / elapse_time <<" MB/s" << endl;
+
+
+// auto start = std::chrono::high_resolution_clock::now();
+//test(0, *a, &sum);
+// auto end = std::chrono::high_resolution_clock::now();
+
+//  cout << "Sum is " << sum << endl;
+
+//  int64_t elapse_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+//  cout<< "scan time: " << elapse_time << "usec" << endl;
+//  cout<< "Bandwidth is " << sizeof(int) * (double)1.0 * *a / elapse_time <<" MB/s" << endl;
 //}
 
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     std::vector<int> toto;
     int size, rank;
 
-    MPI_Init(&argc,&argv);
+    MPI_Init(&argc, &argv);
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -112,22 +123,21 @@ int main(int argc, char *argv[])
     int i;
 
     // initialize
-    a = (int*)malloc(MAX_LEN * sizeof(int));            //origin array
-    res = (int*)malloc(MAX_LEN * sizeof(int));
-    res2 = (int*)malloc(MAX_LEN * sizeof(int));
-    memset(a, 0 , MAX_LEN * sizeof(*a));                //sets to 0
-    memset(res, 0 , MAX_LEN * sizeof(*res));
-    memset(res2, 0 , MAX_LEN * sizeof(*res2));
+    a = (int *) malloc(MAX_LEN * sizeof(int));            //origin array
+    res = (int *) malloc(MAX_LEN * sizeof(int));
+    res2 = (int *) malloc(MAX_LEN * sizeof(int));
+    memset(a, 0, MAX_LEN * sizeof(*a));                //sets to 0
+    memset(res, 0, MAX_LEN * sizeof(*res));
+    memset(res2, 0, MAX_LEN * sizeof(*res2));
 
     // TODO
     // you can add some variable or some other things as you want if needed
     // TODO
 
-    for(count=4; count<=MAX_LEN; count*=16) // length of array : [ 4  64  1024  16384  262144  4194304 ]
+    for (count = 4; count <= MAX_LEN; count *= 16) // length of array : [ 4  64  1024  16384  262144  4194304 ]
     {
         // the element of array is generated randomly
-        for(i=0; i<MAX_LEN; i++)
-        {
+        for (i = 0; i < MAX_LEN; i++) {
             a[i] = rand() % MAX_LEN;
         }
 
@@ -138,7 +148,7 @@ int main(int argc, char *argv[])
         MPI_Barrier(MPI_COMM_WORLD);
         end_time = get_time_us();
         use_time2 = end_time - begin_time;
-        if(rank == 0)
+        if (rank == 0)
             printf("%d int use_time : %ld us [MPI_Reduce]\n", count, use_time2);
 
 
@@ -156,7 +166,7 @@ int main(int argc, char *argv[])
             int source = 1;
             while (source < size) {
                 MPI_Recv(a, count, MPI_INTEGER, MPI_ANY_SOURCE, REDUCE_REQUEST, MPI_COMM_WORLD, &status);
-                for(i = 0; i < count; i++) {
+                for (i = 0; i < count; i++) {
                     res[i] += a[i];
                 }
 
@@ -171,49 +181,36 @@ int main(int argc, char *argv[])
         MPI_Barrier(MPI_COMM_WORLD);
         end_time = get_time_us();
         use_time = end_time - begin_time;
-        if(rank == 0)
+        if (rank == 0)
             printf("%d int use_time : %ld us [YOUR_Reduce]\n", count, use_time);
 
 
         // check the result of MPI_Reduce and YOUR_Reduce
-        if(rank == 0)
-        {
+        if (rank == 0) {
             int correctness = 1;
-            for(i=0; i<count; i++)
-            {
-                if(res2[i] != res[i])
-                {
+            for (i = 0; i < count; i++) {
+                if (res2[i] != res[i]) {
                     correctness = 0;
                 }
             }
-            if(correctness == 0)
+            if (correctness == 0)
                 printf("WRONG !!!\n");
             else
                 printf("CORRECT !\n");
         }
 
 
-        if(rank == 0)
-        {
-            size_t sum = 0;
+        if (rank == 0) {
+            int sum = 0;
             begin_time = get_time_us();
-            // TODO
-            SUM_Array(a, count);
-            //test - this is the function
-            // TODO
-
-  //          test(0, count, &sum);
-    //        end_time = get_time_us();
-      //      use_time = end_time - begin_time;
-        //    printf("sum is %ld, use_time : %ld us [single thread]\n", sum, use_time);
+            sum = SUM_Array(res, count);
+            end_time = get_time_us();
+            use_time = end_time - begin_time;
+            printf("sum is %ld, use_time : %ld us [single thread]\n", sum, use_time);
 
             sum = 0;
             begin_time = get_time_us();
-            // TODO
-  //          SUM_Threaded();
-            // calculate the sum of the result array reduced to process 0,
-            // please make it faster with multiple threads.
-            // TODO
+            sum = SUM_Array_threaded(res, count);
             end_time = get_time_us();
             use_time = end_time - begin_time;
             printf("sum is %ld, use_time : %ld us [multiple threads]\n\n", sum, use_time);
