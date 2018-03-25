@@ -66,28 +66,27 @@ void SUM_Threaded() {//thread launching
 }
 
 */
-
-
-//unthreaded test
-
 int SUM_Array(int* a, int count) {
     size_t sum = 0;
 
-    for (size_t i=0; i<count; i++)
+    for (size_t i = 0; i < count; i++)
         sum += a[i];
 
     return sum;
+}
+//unthreaded test
+
 
    // auto start = std::chrono::high_resolution_clock::now();
     //test(0, *a, &sum);
    // auto end = std::chrono::high_resolution_clock::now();
 
-    cout << "Sum is " << sum << endl;
+  //  cout << "Sum is " << sum << endl;
 
   //  int64_t elapse_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
   //  cout<< "scan time: " << elapse_time << "usec" << endl;
   //  cout<< "Bandwidth is " << sizeof(int) * (double)1.0 * *a / elapse_time <<" MB/s" << endl;
-}
+//}
 
 
 
@@ -148,20 +147,17 @@ int main(int argc, char *argv[])
         begin_time = get_time_us();
         // TODO
 
-        if (rank) { //not main process, send data to main
+        if (rank > 0) { //not main process, send data to main
             MPI_Send(a, count, MPI_INTEGER, 0, REDUCE_REQUEST, MPI_COMM_WORLD);
         } else { //receive data from other process
             MPI_Status status;
-            int* b;
 
-            for(i = 0; i < count; i++) {
-                res[i] = a[i];
-            }
+            memcpy(res, a, count * sizeof(int));
             int source = 1;
             while (source < size) {
-                MPI_Recv(b, count, MPI_INTEGER, MPI_ANY_SOURCE, REDUCE_REQUEST, MPI_COMM_WORLD, &status);
+                MPI_Recv(a, count, MPI_INTEGER, MPI_ANY_SOURCE, REDUCE_REQUEST, MPI_COMM_WORLD, &status);
                 for(i = 0; i < count; i++) {
-                    res[i] += b[i];
+                    res[i] += a[i];
                 }
 
                 source++;
@@ -202,7 +198,7 @@ int main(int argc, char *argv[])
             size_t sum = 0;
             begin_time = get_time_us();
             // TODO
-           SUM_Array();
+            SUM_Array(a, count);
             //test - this is the function
             // TODO
 
