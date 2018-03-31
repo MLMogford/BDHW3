@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         // YOUR_Reduce and then print the usetime, the result should be put in res[]
         MPI_Barrier(MPI_COMM_WORLD);
         begin_time = get_time_us();
-        // TODO
+        /*/ TODO
 
         if (rank > 0) { //not main process, send data to main
             MPI_Send(a, count, MPI_INTEGER, 0, REDUCE_REQUEST, MPI_COMM_WORLD);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
                 source++;
             }
         }
-
+*/
 
 
         MPI_Barrier(MPI_COMM_WORLD);
