@@ -6,7 +6,6 @@
 #include <vector>
 #include <thread>
 #include <iostream>
-//#include <mpif-sizeof.h>
 #include<random>
 #include <array>
 #include <algorithm>
@@ -14,7 +13,6 @@
 
 using namespace std;
 
-//#include <boost/mpi.hpp>
 #define REDUCE_REQUEST 1
 
 
@@ -29,44 +27,7 @@ long get_time_us()  // return the time in the unit of us
 }
 
 
-/*
-inline void test(size_t start, size_t end, size_t *result, int* a)//summation, passed as a parameter
-{
-    size_t sum = 0;
-    for (size_t i=start; i<end; i++)
-        sum += a[i];
 
-    *result = sum;
-}
-
-void SUM_Threaded() {//thread launching
-    std::vector<std::thread> threads(std::thread::hardware_concurrency());
-    std::vector<size_t> results(std::thread::hardware_concurrency());
-
-    size_t sum = 0;
-
-    for (size_t j = 0; j < threads.size(); ++j) {
-        size_t start =  j * a / std::thread::hardware_concurrency();
-        size_t end = (j + 1) * a / std::thread::hardware_concurrency();
-        threads[j] = std::thread(test, start, end, &results[j]);
-    }
-
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < threads.size(); ++i) {
-        threads[i].join();
-        sum += results[i];
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    cout << "Sum is " << sum << endl;
-
-    int64_t elapse_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    cout<< "scan time: " << elapse_time << "usec" << endl;
-    cout<< "Bandwidth is " << sizeof(int) * (double)1.0 * (a / elapse_time) <<" MB/s" << endl;
-}
-
-*/
 int SUM_Array(int *a, int count) {
     int sum = 0;
 
@@ -88,17 +49,6 @@ int SUM_Array_threaded(int *a, int count) {
 }
 
 
-
-// auto start = std::chrono::high_resolution_clock::now();
-//test(0, *a, &sum);
-// auto end = std::chrono::high_resolution_clock::now();
-
-//  cout << "Sum is " << sum << endl;
-
-//  int64_t elapse_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-//  cout<< "scan time: " << elapse_time << "usec" << endl;
-//  cout<< "Bandwidth is " << sizeof(int) * (double)1.0 * *a / elapse_time <<" MB/s" << endl;
-//}
 
 
 
@@ -176,7 +126,34 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // you should delete the next line, and do the reduction using your idea
+
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        begin_time = get_time_us();
+        // TODO
+
+        if (rank %2 != 0) { //odd no. process, send data to even
+            MPI_Send(a, count, MPI_INTEGER, rank - 1, REDUCE_REQUEST, MPI_COMM_WORLD);
+
+        } else if (rank %2 ==0 && rank != 4 && rank != 0) {
+            MPI_Send(a, count, MPI_INTEGER, rank -2, REDUCE_REQUEST, MPI_COMM_WORLD);
+        }
+        else  if (rank  == 4) {
+            MPI_Send(a, count, MPI_INTEGER, 0, REDUCE_REQUEST, MPI_COMM_WORLD);
+        }
+
+         else { //receive data from other process
+            MPI_Status status;
+            int result;
+            result = log2(size);
+            memcpy(res, a, count * sizeof(int));
+            for (int j = 0 ; j < result ; j++) {
+                MPI_Recv(a, count, MPI_INTEGER, MPI_ANY_SOURCE, REDUCE_REQUEST, MPI_COMM_WORLD, &status);
+                for (i = 0; i < count; i++) {
+                    res[i] += a[i];
+                }
+            }
+        }
 
 
         // TODO
